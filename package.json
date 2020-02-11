@@ -6,6 +6,13 @@
   "repository": "https://github.com/patarapolw/q-search.git",
   "author": "Pacharapol Withayasakpunt <patarapolw@gmail.com> (https://polvcode.dev)",
   "license": "MIT",
+  "files": [
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -P src/tsconfig.json"
+  },
   "dependencies": {
     "dot-prop": "^5.2.0",
     "escape-string-regexp": "^2.0.0",
@@ -20,6 +27,8 @@
     "eslint-plugin-node": ">=9.1.0",
     "eslint-plugin-promise": ">=4.2.1",
     "eslint-plugin-standard": ">=4.0.0",
+    "eslint-plugin-vue": "^6.1.2",
+    "glob": "^7.1.6",
     "typescript": "^3.7.5"
   }
 }
