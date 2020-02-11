@@ -1,5 +1,6 @@
 import shlex from 'shlex'
 import escapeRegexp from 'escape-string-regexp'
+import dotProp from 'dot-prop'
 
 export type ISchema = Record<string, {
   type?: 'string' | 'number' | 'date' | 'boolean'
@@ -13,16 +14,17 @@ export interface IQSearchResult {
 
 export default class QSearch {
   constructor (
+    // eslint-disable-next-line no-unused-vars
     public options: {
       schema?: ISchema
       nonSchemaKeys?: string[]
       /**
        * Default to
-       * 
+       *
        * ```js
        * (d: any) => d ? new Date(d) : null
        * ```
-       * 
+       *
        * Set to `false` to set `(d: any) => d`, or non-conversion
        * or create your own, perhaps using moment.js
        */
@@ -38,12 +40,12 @@ export default class QSearch {
     return new Set<string>(this.options.nonSchemaKeys || [])
   }
 
-  normalizeDates (d: any): Date |  string | null {
+  normalizeDates (d: any): Date | string | null {
     const fn = this.options.normalizeDates instanceof Function
       ? this.options.normalizeDates
       : this.options.normalizeDates === false
         ? (d: any) => d
-        : ((d: any) => d ? new Date(d) : null)
+        : (d: any) => d ? new Date(d) : null
     return fn(d)
   }
 
@@ -75,17 +77,17 @@ export default class QSearch {
                 const [_, p1, p2] = /^([+-]?\d+(?:\.\d+))([yMwdhm])$/i.exec(v) || []
                 const v0 = +new Date()
                 if (p2 === 'y') {
-                  return v0 + parseFloat(p1) * 365 * 24 * 60 * 60 * 1000  // 365d 24h 60m 60s 1000ms
+                  return v0 + parseFloat(p1) * 365 * 24 * 60 * 60 * 1000 // 365d 24h 60m 60s 1000ms
                 } else if (p2 === 'M') {
-                  return v0 + parseFloat(p1) * 30 * 24 * 60 * 60 * 1000  // 30d 24h 60m 60s 1000ms
+                  return v0 + parseFloat(p1) * 30 * 24 * 60 * 60 * 1000 // 30d 24h 60m 60s 1000ms
                 } else if (p2 === 'w') {
-                  return v0 + parseFloat(p1) * 7 * 24 * 60 * 60 * 1000  // 7d 24h 60m 60s 1000ms
+                  return v0 + parseFloat(p1) * 7 * 24 * 60 * 60 * 1000 // 7d 24h 60m 60s 1000ms
                 } else if (p2 === 'd') {
-                  return v0 + parseFloat(p1) * 24 * 60 * 60 * 1000  // 24h 60m 60s 1000ms
+                  return v0 + parseFloat(p1) * 24 * 60 * 60 * 1000 // 24h 60m 60s 1000ms
                 } else if (p2 === 'h') {
-                  return v0 + parseFloat(p1) * 60 * 60 * 1000  // 60m 60s 1000ms
+                  return v0 + parseFloat(p1) * 60 * 60 * 1000 // 60m 60s 1000ms
                 } else if (p2 === 'm') {
-                  return v0 + parseFloat(p1) * 60 * 1000  // 60s 1000ms
+                  return v0 + parseFloat(p1) * 60 * 1000 // 60s 1000ms
                 }
                 return null
               })()
@@ -158,5 +160,89 @@ export default class QSearch {
     }
 
     return { cond, nonSchema }
+  }
+
+  filter<T> (q: string, item: T[]): T[] {
+    return item.filter(it => this._condFilter(this.parse(q).cond)(it))
+  }
+
+  private _condFilter (cond: any) {
+    return (item: Record<string, any>): boolean => {
+      for (const [k, v] of Object.entries<any>(cond)) {
+        if (k[0] === '$') {
+          if (k === '$and') {
+            return v.every((x: Record<string, any>) => this._condFilter(x)(item))
+          } else if (k === '$or') {
+            return v.some((x: Record<string, any>) => this._condFilter(x)(item))
+          } else if (k === '$nor') {
+            return !v.some((x: Record<string, any>) => this._condFilter(x)(item))
+          }
+        } else {
+          const itemK = dotProp.get<any>(item, k)
+
+          if (v && v.constructor === {}.constructor &&
+            Object.keys(v).some((k0) => k0[0] === '$')) {
+            return (() => {
+              for (const op of Object.keys(v)) {
+                try {
+                  if (op === '$regex') {
+                    if (Array.isArray(itemK)) {
+                      const r = new RegExp(v[op].toString(), 'i')
+                      return itemK.some((el) => r.test(el))
+                    } else {
+                      return new RegExp(v[op].toString(), 'i').test((itemK as any).toString())
+                    }
+                  } else if (op === '$exists') {
+                    return (itemK === null || itemK === undefined || itemK === '') !== v[op]
+                  } else {
+                    let v1 = itemK
+                    let v2 = v[op]
+
+                    let canCompare = false
+
+                    if (typeof v1 === 'object' && typeof v2 === 'object') {
+                      if (v1 && v2 && (v1 instanceof Date || v2 instanceof Date)) {
+                        if (!(v1 instanceof Date)) {
+                          v1 = new Date(v1)
+                        }
+
+                        if (!(v2 instanceof Date)) {
+                          v2 = new Date(v2)
+                        }
+
+                        canCompare = true
+                      }
+                    } else {
+                      canCompare = (typeof v1 === typeof v2)
+                    }
+
+                    if (canCompare) {
+                      if (op === '$gte') {
+                        return v1 >= v2
+                      } else if (op === '$gt') {
+                        return v1 > v2
+                      } else if (op === '$lte') {
+                        return v1 <= v2
+                      } else if (op === '$lt') {
+                        return v1 < v2
+                      }
+                    }
+                  }
+                } catch (e) { }
+              }
+              return false
+            })()
+          } else if (Array.isArray(itemK)) {
+            if (!itemK.includes(v)) {
+              return false
+            }
+          } else if (itemK !== v) {
+            return false
+          }
+        }
+      }
+
+      return true
+    }
   }
 }

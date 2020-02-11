@@ -1,3 +1,5 @@
-*
+*.*
 !*.js
 !*.ts
+node_modules
+/lib/
