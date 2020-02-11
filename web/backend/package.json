@@ -10,14 +10,21 @@
     "build": "webpack"
   },
   "dependencies": {
-    "dotenv": "^8.2.0",
+    "@types/lokijs": "^1.5.3",
+    "@types/mongodb": "^3.3.16",
     "express": "^4.17.1",
-    "morgan": "^1.9.1"
+    "lokijs": "^1.5.8",
+    "mongodb": "^3.5.2",
+    "morgan": "^1.9.1",
+    "nedb-promises": "^4.0.1"
   },
   "devDependencies": {
     "@types/express": "^4.17.2",
+    "@types/faker": "^4.1.9",
     "@types/morgan": "^1.7.37",
     "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "faker": "^4.1.0",
     "ts-node-dev": "^1.0.0-pre.44",
     "typescript": "^3.7.5",
     "webpack": "^4.41.5",
