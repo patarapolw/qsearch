@@ -62,13 +62,13 @@ export default class App extends Vue {
   count = 0
 
   readonly columns = [
-    { field: 'frequency', label: 'frequency', numeric: true, width: 100 },
-    { field: 'name', label: 'name', width: 150 },
-    { field: 'description', label: 'description' },
-    { field: 'isCool', label: 'isCool', width: 100 },
-    { field: 'date', label: 'date', width: 250 },
-    { field: 'data.a', label: 'data.a', width: 150 },
-    { field: 'data.b', label: 'data.b', width: 150 }
+    { field: 'frequency', label: 'frequency', numeric: true, width: 100, sortable: true },
+    { field: 'name', label: 'name', width: 150, sortable: true },
+    { field: 'description', label: 'description', sortable: true },
+    { field: 'isCool', label: 'isCool', width: 100, sortable: true },
+    { field: 'date', label: 'date', width: 250, sortable: true },
+    { field: 'data.a', label: 'data.a', width: 150, sortable: true },
+    { field: 'data.b', label: 'data.b', width: 150, sortable: true }
   ]
 
   get q () {

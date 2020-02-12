@@ -11,7 +11,7 @@
     "postbuild": "cd ../dist && yarn"
   },
   "dependencies": {
-    "@patarapolw/qsearch": "1.0.1",
+    "@patarapolw/qsearch": "1.0.3",
     "connect-history-api-fallback": "^1.6.0",
     "dot-prop": "^5.2.0",
     "dotenv": "^8.2.0",

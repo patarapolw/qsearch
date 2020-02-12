@@ -108,7 +108,9 @@ export default class QSearch {
         if (op === '+') {
           return { [k]: v }
         } else if (op === '-') {
-          if (opK === '>' && (typeof v === 'number' || isDate)) {
+          if (typeof v === 'string' && !isDate) {
+            v = { $regex: new RegExp(`^((?!${escapeRegexp(v)}).)*$`, 'i') }
+          } else if (opK === '>' && (typeof v === 'number' || isDate)) {
             v = { $lte: v }
           } else if (opK === '<' && (typeof v === 'number' || isDate)) {
             v = { $gte: v }
