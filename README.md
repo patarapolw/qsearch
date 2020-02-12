@@ -8,6 +8,8 @@ See <https://q2search.herokuapp.com>
 
 This demo also allows `is:unique` as a special operator.
 
+See [/web/backend/src/schema.ts](/web/backend/src/schema.ts) and [/web/backend/src/shared.ts](/web/backend/src/shared.ts) for schema and search options, respectively.
+
 ## Usage
 
 This is inspired from [lunr.js](https://lunrjs.com/guides/searching.html) search by fields, if specified, with some major differences.
@@ -27,6 +29,7 @@ This is inspired from [lunr.js](https://lunrjs.com/guides/searching.html) search
 - Extra keywords, such as `is:duplicate` can be set.
 - Tested for [loki.js](https://github.com/techfort/LokiJS), [nedb](https://github.com/louischatriot/nedb), and [MongoDB](https://www.mongodb.com/). Also, pure JavaScript Array filtering is possible too.
 - For SQL's, you might need extra work to convert to queries, or just use NoSQL's.
+- For now, fuzzy search is not supported.
 
 ## Used in
 

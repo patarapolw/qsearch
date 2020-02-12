@@ -1,9 +1,19 @@
 <template lang="pug">
 section
-  b-tabs(v-model="tabIndex" type="is-boxed" style="margin: 1rem; margin-bottom: 0;")
-    b-tab-item(label="MongoDB")
-    b-tab-item(label="LokiJS")
-    b-tab-item(label="NeDB") 
+  .tabs.is-boxed(style="margin: 1rem;")
+    ul(style="flex-grow: 0;")
+      li(:class="mode === 'MongoDB' ? 'is-active' : ''")
+        a(@click="mode = 'MongoDB'") MongoDB
+    ul(style="flex-grow: 0;")
+      li(:class="mode === 'LokiJS' ? 'is-active' : ''")
+        a(@click="mode = 'LokiJS'") LokiJS
+    ul(style="flex-grow: 0;")
+      li(:class="mode === 'NeDB' ? 'is-active' : ''")
+        a(@click="mode = 'NeDB'") NeDB
+    ul(style="flex-grow: 1;")
+    ul(style="flex-grow: 0;")
+      a(href="https://github.com/patarapolw/qsearch" target="_blank")
+        b-icon(icon="github-circle")
   .container(style="margin-top: min-height: 80vh; display: flex; flex-direction: column;")
     b-field
       template(slot="label")
@@ -12,7 +22,7 @@ section
           a.button.is-white.is-small(
             href="https://github.com/patarapolw/qsearch"
             target="_blank"
-          ) &#x2754;
+          ) &#x2753;
       b-input(v-model="q" placeholder="Please search to view results")
     div(style="flex-grow: 1; position: relative;")
       b-loading(v-if="!output" active)
@@ -41,22 +51,21 @@ section
 <script lang="ts">
 import { Vue, Component, Watch } from 'vue-property-decorator'
 import axios from 'axios'
+import dayjs from 'dayjs'
 
 @Component
 export default class App extends Vue {
   output: any[] | null = null
   count = 0
 
-  readonly tabArray = ['mongodb', 'lokijs', 'nedb']
-
   readonly columns = [
     { field: 'frequency', label: 'frequency', numeric: true, width: 100 },
-    { field: 'name', label: 'name', width: 250 },
+    { field: 'name', label: 'name', width: 150 },
     { field: 'description', label: 'description' },
     { field: 'isCool', label: 'isCool', width: 100 },
     { field: 'date', label: 'date', width: 200 },
-    { field: 'data.a', label: 'data.a', width: 250 },
-    { field: 'data.b', label: 'data.b', width: 250 }
+    { field: 'data.a', label: 'data.a', width: 150 },
+    { field: 'data.b', label: 'data.b', width: 150 }
   ]
 
   get q () {
@@ -74,20 +83,13 @@ export default class App extends Vue {
   }
 
   get mode () {
-    return this.$route.hash.substr(1) || this.tabArray[0]
+    return this.$route.path.substr(1) || 'MongoDB'
   }
-
-  get tabIndex () {
-    const i = this.tabArray.indexOf(this.mode)
-    return i === -1 ? 0 : i
-  }
-
-  set tabIndex (i) {
-    console.log(i)
-
+  
+  set mode (m) {
     this.$router.replace({
       ...this.$route,
-      hash: this.tabArray[i]
+      path: `/${m}`
     })
   }
 
@@ -146,14 +148,14 @@ export default class App extends Vue {
     this.load()
   }
 
-  @Watch('$route.hash')
+  @Watch('$route.path')
   @Watch('q')
   @Watch('page')
   @Watch('sort')
   @Watch('order')
   async load () {
     try {
-      const r = await axios.get(`/api/${this.mode}`, {
+      const r = await axios.get(`/api/${this.mode.toLocaleLowerCase()}`, {
         params: {
           q: this.q,
           offset: (this.page - 1) * 5,
@@ -163,8 +165,13 @@ export default class App extends Vue {
       })
 
       this.count = r.data.count
-      Vue.set(this, 'output', r.data.data)
+      Vue.set(this, 'output', r.data.data.map((el: any) => {
+        return Object.entries<any>(el)
+          .map(([k, v]) => [k, k === 'date' ? dayjs(v).format('YYYY-MM-DD HH:mm Z') : v])
+          .reduce((acc, [k, v]) => ({ ...acc, [k]: v}), {})
+      }))
     } catch (e) {
+      console.error(e)
       Vue.set(this, 'output', [])
     }
   }

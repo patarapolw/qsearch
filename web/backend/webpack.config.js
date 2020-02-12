@@ -1,5 +1,22 @@
+const fs = require('fs')
 const path = require('path')
+const glob = require('glob')
 const nodeExternals = require('webpack-node-externals')
+
+fs.mkdirSync('../dist/assets')
+
+glob.sync('**/*', {
+  cwd: './assets'
+}).map((f) => {
+  fs.copyFileSync(`./assets/${f}`, `../dist/assets/${f}`)
+})
+
+const pkg = require('./package.json')
+
+delete pkg.devDependencies
+delete pkg.scripts
+
+fs.writeFileSync('../dist/package.json', JSON.stringify(pkg, null, 2))
 
 module.exports = {
   mode: 'production',
@@ -20,7 +37,5 @@ module.exports = {
       }
     ]
   },
-  externals: [nodeExternals({
-    whitelist: [/^@patarapolw\//]
-  })]
+  externals: [nodeExternals()]
 }

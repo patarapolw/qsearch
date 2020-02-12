@@ -27,22 +27,4 @@ const { spawnSafe } = require('./utils')
   }).map((f) => {
     fs.copyFileSync(`${__dirname}/public/${f}`, `${__dirname}/../dist/${f}`)
   })
-
-  fs.mkdirSync(`${__dirname}/../dist/assets`)
-
-  glob.sync('**/*', {
-    cwd: `${__dirname}/../backend/assets`
-  }).map((f) => {
-    fs.copyFileSync(`${__dirname}/../backend/assets/${f}`, `${__dirname}/../dist/assets/${f}`)
-  })
-
-  const pkg = require(`${__dirname}/../backend/package.json`)
-
-  delete pkg.devDependencies
-  delete pkg.scripts.build
-
-  fs.writeFileSync(`${__dirname}/../dist/package.json`, JSON.stringify(pkg, null, 2))
-  await spawnSafe('yarn', [], {
-    cwd: `${__dirname}/../dist`
-  })
 })().catch(console.error)
