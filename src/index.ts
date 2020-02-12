@@ -104,9 +104,9 @@ export default class QSearch {
           return { [k]: v }
         } else if (op === '-') {
           if (opK === '>' && (typeof v === 'number' || isDate)) {
-            v = { [k]: { $lte: v } }
+            v = { $lte: v }
           } else if (opK === '<' && (typeof v === 'number' || isDate)) {
-            v = { [k]: { $gte: v } }
+            v = { $gte: v }
           } else {
             v = { $ne: v }
           }
@@ -114,16 +114,14 @@ export default class QSearch {
           return { [k]: v }
         } else {
           if (typeof v === 'string' && !isDate) {
-            v = { [k]: { $regex: new RegExp(escapeRegexp(v), 'i') } }
+            v = { $regex: new RegExp(escapeRegexp(v), 'i') }
           } else if (opK === '>' && (typeof v === 'number' || isDate)) {
-            v = { [k]: { $gt: v } }
+            v = { $gt: v }
           } else if (opK === '<' && (typeof v === 'number' || isDate)) {
-            v = { [k]: { $lt: v } }
-          } else {
-            v = { [k]: v }
+            v = { $lt: v }
           }
 
-          return v
+          return { [k]: v }
         }
       }
 
@@ -214,6 +212,10 @@ export default class QSearch {
                       }
                     } else {
                       canCompare = (typeof v1 === typeof v2)
+                    }
+
+                    if (op === '$ne') {
+                      return v1 !== v2
                     }
 
                     if (canCompare) {
