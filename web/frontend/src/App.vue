@@ -170,6 +170,8 @@ export default class App extends Vue {
           .map(([k, v]) => [k, k === 'date' ? dayjs(v).format('YYYY-MM-DD HH:mm Z') : v])
           .reduce((acc, [k, v]) => ({ ...acc, [k]: v}), {})
       }))
+
+      console.info(r.data.cond)
     } catch (e) {
       console.error(e)
       Vue.set(this, 'output', [])

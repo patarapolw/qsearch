@@ -51,7 +51,8 @@ apiRouter.get('/lokijs', async (req, res, next) => {
 
       return res.json({
         data: data.slice(offset, offset + limit),
-        count: data.length
+        count: data.length,
+        cond: r.cond
       })
     } else {
       const data = col.chain()
@@ -62,7 +63,7 @@ apiRouter.get('/lokijs', async (req, res, next) => {
         .data()
       const count = col.count(r.cond)
 
-      return res.json({ data, count })
+      return res.json({ data, count, cond: r.cond })
     }
   } catch (e) {
     return next(e)
@@ -83,7 +84,8 @@ apiRouter.get('/nedb', async (req, res, next) => {
 
       return res.json({
         data: data.slice(offset, offset + limit),
-        count: data.length
+        count: data.length,
+        cond: r.cond
       })
     } else {
       const data = await nedb.find(r.cond)
@@ -92,7 +94,7 @@ apiRouter.get('/nedb', async (req, res, next) => {
         .limit(limit)
       const count = await nedb.count(r.cond)
 
-      return res.json({ data, count })
+      return res.json({ data, count, cond: r.cond })
     }
   } catch (e) {
     return next(e)
@@ -128,7 +130,7 @@ apiRouter.get('/mongodb', async (req, res, next) => {
         { $count: 'count' }
       ]).toArray())[0].count
 
-      return res.json({ data, count })
+      return res.json({ data, count, cond: r.cond })
     } else {
       const data = await col.find(r.cond)
         .sort({ [sort || '_id']: order === 'desc' ? -1 : 1 })
@@ -137,7 +139,7 @@ apiRouter.get('/mongodb', async (req, res, next) => {
         .toArray()
       const count = await col.find(r.cond).count()
 
-      return res.json({ data, count })
+      return res.json({ data, count, cond: r.cond })
     }
   } catch (e) {
     return next(e)

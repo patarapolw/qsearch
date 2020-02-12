@@ -3,7 +3,9 @@ const path = require('path')
 const glob = require('glob')
 const nodeExternals = require('webpack-node-externals')
 
-fs.mkdirSync('../dist/assets')
+if (!fs.existsSync('../dist/assets')) {
+  fs.mkdirSync('../dist/assets')
+}
 
 glob.sync('**/*', {
   cwd: './assets'
