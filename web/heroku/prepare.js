@@ -38,7 +38,6 @@ const { spawnSafe } = require('./utils')
 
   const pkg = require(`${__dirname}/../backend/package.json`)
 
-  delete pkg.dependencies
   delete pkg.devDependencies
   delete pkg.scripts.build
 

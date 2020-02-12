@@ -10,6 +10,7 @@ const port = process.env.PORT || '3001'
 app.use(morgan('dev'))
 
 app.use(express.static('./public'))
+app.use('/assets', express.static('./assets'))
 app.use('/api', apiRouter)
 
 app.listen(port, () => {

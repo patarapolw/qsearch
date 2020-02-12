@@ -66,12 +66,20 @@ export default class QSearch {
         if (v && this.schema[k]) {
           if (this.schema[k].type === 'number') {
             v = parseFloat(v)
+          } else if (this.schema[k].type === 'boolean') {
+            if (v === 'FALSE') {
+              v = false
+            } else if (v === 'TRUE') {
+              v = true
+            } else {
+              v = !!v
+            }
           } else if (this.schema[k].type === 'date') {
             if (v === 'NOW') {
               v = new Date()
             } else {
               const vMillisec = (() => {
-                const [_, p1, p2] = /^([+-]?\d+(?:\.\d+))([yMwdhm])$/i.exec(v) || []
+                const [_, p1, p2] = /^([+-]?\d+(?:\.\d+)?)([yMwdhm])$/i.exec(v) || []
                 const v0 = +new Date()
                 if (p2 === 'y') {
                   return v0 + parseFloat(p1) * 365 * 24 * 60 * 60 * 1000 // 365d 24h 60m 60s 1000ms
@@ -128,6 +136,29 @@ export default class QSearch {
         return
       }
 
+      if (v === 'NULL') {
+        if (op === '-') {
+          $and.push(
+            { [k]: { $exists: true } },
+            { [k]: { $ne: null } }
+          )
+          return
+        } else if (op === '?') {
+          $or.push(
+            { [k]: { $exists: false } },
+            { [k]: null }
+          )
+        } else {
+          $and.push({
+            $or: [
+              { [k]: { $exists: false } },
+              { [k]: null }
+            ]
+          })
+        }
+        return
+      }
+
       let subCond: any = null
 
       if (v) {
@@ -150,7 +181,7 @@ export default class QSearch {
       }
     })
 
-    $or.push($and.length > 1 ? { $and } : $and[0])
+    $or.push($and.length > 1 ? { $and } : ($and[0] || {}))
     $or = $or.filter(el => el)
 
     const cond = $or.length > 1 ? { $or } : ($or[0] || {})

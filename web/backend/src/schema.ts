@@ -6,20 +6,8 @@ import Loki from 'lokijs'
 import mongo from 'mongodb'
 import stringify from 'fast-json-stable-stringify'
 import SparkMD5 from 'spark-md5'
-import { ISchema } from '@patarapolw/qsearch'
 
 import './shared'
-
-export const schema: ISchema = {
-  frequency: { type: 'number' },
-  name: {},
-  description: {},
-  isCool: { type: 'boolean' },
-  date: { type: 'date' },
-  'data.a': { isAny: false },
-  'data.b': { isAny: false },
-  h: { isAny: false }
-}
 
 /**
  * Types to check are -- Number (whole, decimal), String, Boolean, Date, Null, Undefined

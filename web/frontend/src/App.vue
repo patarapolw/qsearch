@@ -1,50 +1,41 @@
 <template lang="pug">
-.container(style="padding-top: 1rem; height: 100vh; display: flex; flex-direction: column;")
-  b-field
-    template(slot="label")
-      span Search
-      b-tooltip(label="How to search?" position="is-right" type="is-dark")
-        a.button.is-white.is-small(
-          href="https://github.com/patarapolw/qsearch"
-          target="_blank"
-        ) &#x2754;
-    b-input(v-model="q" placeholder="Please search to view results")
-  div(style="flex-grow: 1; position: relative;")
-    b-loading(v-if="!output" :is-full-page="false" active)
-    b-table(
-      v-else
-      :data="output"
-      paginated
-      :per-page="5"
-      :total = "count"
+section
+  b-tabs(v-model="tabIndex" type="is-boxed" style="margin: 1rem; margin-bottom: 0;")
+    b-tab-item(label="MongoDB")
+    b-tab-item(label="LokiJS")
+    b-tab-item(label="NeDB") 
+  .container(style="margin-top: min-height: 80vh; display: flex; flex-direction: column;")
+    b-field
+      template(slot="label")
+        span Search with {{mode}}
+        b-tooltip(label="How to search?" position="is-right" type="is-dark")
+          a.button.is-white.is-small(
+            href="https://github.com/patarapolw/qsearch"
+            target="_blank"
+          ) &#x2754;
+      b-input(v-model="q" placeholder="Please search to view results")
+    div(style="flex-grow: 1; position: relative;")
+      b-loading(v-if="!output" active)
+      b-table(
+        v-else
+        :data="output"
+        paginated
+        :per-page="5"
+        :total = "count"
+        :columns="columns"
 
-      backend-pagination
-      @page-change="page = $event"
-      backend-sorting
-      @sort="onSort"
-      :default-sort="[sort, order]"
-    )
-      template(slot-scope="props")
-        b-table-column(label="Unicode" field="codePoint" sortable width="50")
-          | {{'U+' + props.row.codePoint.toString(16).toLocaleUpperCase()}}
-        b-table-column(label="Symbol" field="symbol" width="100")
-          | {{props.row.symbol}}
-        b-table-column(label="Code" field="code" sortable width="100")
-          code {{props.row.code}}
-        b-table-column(label="Alternatives" field="alt" width="100")
-          div(v-for="a in props.row.alt" :key="a")
-            code {{a}}
-        b-table-column(label="Frequency" field="frequency" sortable width="50")
-          | {{props.row.frequency ? props.row.frequency.toExponential(3) : ''}}
-        b-table-column(label="Description" field="description" sortable) {{props.row.description}}
-        b-table-column(label="Hint" field="hint" style="min-width: 200px;")
-          div(v-for="a, i in props.row.hint" :key="i") {{a}}
-      template(slot="empty")
-        section.section
-          .content.has-text-grey.has-text-centered
-            p
-              b-icon(icon="emoticon-sad" size="is-large")
-            p Nothing here.
+        backend-pagination
+        @page-change="page = $event"
+        backend-sorting
+        @sort="onSort"
+        :default-sort="[sort, order]"
+      )
+        template(slot="empty")
+          section.section
+            .content.has-text-grey.has-text-centered
+              p
+                b-icon(icon="emoticon-sad" size="is-large")
+              p Nothing here.
 </template>
 
 <script lang="ts">
@@ -55,7 +46,50 @@ import axios from 'axios'
 export default class App extends Vue {
   output: any[] | null = null
   count = 0
-  q = ''
+
+  readonly tabArray = ['mongodb', 'lokijs', 'nedb']
+
+  readonly columns = [
+    { field: 'frequency', label: 'frequency', numeric: true, width: 100 },
+    { field: 'name', label: 'name', width: 250 },
+    { field: 'description', label: 'description' },
+    { field: 'isCool', label: 'isCool', width: 100 },
+    { field: 'date', label: 'date', width: 200 },
+    { field: 'data.a', label: 'data.a', width: 250 },
+    { field: 'data.b', label: 'data.b', width: 250 }
+  ]
+
+  get q () {
+    return this.$route.query.q
+  }
+
+  set q (q) {
+    this.$router.replace({
+      ...this.$route,
+      query: {
+        ...this.$route.query,
+        q
+      }
+    })
+  }
+
+  get mode () {
+    return this.$route.hash.substr(1) || this.tabArray[0]
+  }
+
+  get tabIndex () {
+    const i = this.tabArray.indexOf(this.mode)
+    return i === -1 ? 0 : i
+  }
+
+  set tabIndex (i) {
+    console.log(i)
+
+    this.$router.replace({
+      ...this.$route,
+      hash: this.tabArray[i]
+    })
+  }
 
   get page () {
     const pageString = Array.isArray(this.$route.query.page) ? this.$route.query.page[0] : this.$route.query.page
@@ -65,9 +99,13 @@ export default class App extends Vue {
   set page (page) {
     if (page === 1) {
       const { page, ...query } = this.$route.query
-      this.$router.push({ query })
+      this.$router.replace({
+        ...this.$route,
+        query
+      })
     } else {
-      this.$router.push({
+      this.$router.replace({
+        ...this.$route,
         query: {
           ...this.$route.query,
           page: page.toString()
@@ -81,7 +119,8 @@ export default class App extends Vue {
   }
 
   set sort (sort) {
-    this.$router.push({
+    this.$router.replace({
+      ...this.$route,
       query: {
         ...this.$route.query,
         sort
@@ -94,7 +133,8 @@ export default class App extends Vue {
   }
 
   set order (order) {
-    this.$router.push({
+    this.$router.replace({
+      ...this.$route,
       query: {
         ...this.$route.query,
         order
@@ -103,30 +143,17 @@ export default class App extends Vue {
   }
 
   async created () {
-    this.q = this.$route.query.q as string || '+type:emoji'
     this.load()
   }
 
-  @Watch('$route.query.q')
-  onRouteQChanged () {
-    const q = this.$route.query.q
-    this.q = (Array.isArray(q) ? q[0] : q) || ''
-  }
-
+  @Watch('$route.hash')
   @Watch('q')
   @Watch('page')
   @Watch('sort')
   @Watch('order')
   async load () {
-    this.$router.push({
-      query: {
-        ...this.$route.query,
-        q: this.q
-      }
-    })
-
     try {
-      const r = await axios.post(`/api/${this.$route.hash || 'mongo'}`, undefined, {
+      const r = await axios.get(`/api/${this.mode}`, {
         params: {
           q: this.q,
           offset: (this.page - 1) * 5,

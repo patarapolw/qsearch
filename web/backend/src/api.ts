@@ -6,7 +6,7 @@ import NeDB from 'nedb-promises'
 import QSearch from '@patarapolw/qsearch'
 import dotProp from 'dot-prop'
 
-import { schema } from './schema'
+import { schema } from './shared'
 
 const apiRouter = Router()
 if (process.env.NODE_ENV === 'development') {
@@ -42,8 +42,7 @@ apiRouter.get('/lokijs', async (req, res, next) => {
 
     const col = loki.getCollection('q')
 
-    const { q, offset, limit, sort, order } = parseQuery(req.query)
-    const r = qSearch.parse(q)
+    const { offset, limit, sort, order, r } = parseQuery(req.query)
 
     if (r.nonSchema.includes('is:unique')) {
       const data = sortBy(Object.values(col.find(r.cond).reduce((acc, c) => {
@@ -66,7 +65,7 @@ apiRouter.get('/lokijs', async (req, res, next) => {
       return res.json({ data, count })
     }
   } catch (e) {
-    next(e)
+    return next(e)
   }
 })
 
@@ -75,8 +74,7 @@ apiRouter.get('/nedb', async (req, res, next) => {
     if (!nedb) {
       nedb = NeDB.create({ filename: 'assets/db.nedb' })
     }
-    const { q, offset, limit, sort, order } = parseQuery(req.query)
-    const r = qSearch.parse(q)
+    const { offset, limit, sort, order, r } = parseQuery(req.query)
 
     if (r.nonSchema.includes('is:unique')) {
       const data = sortBy(Object.values((await nedb.find(r.cond)).reduce((acc, c: any) => {
@@ -97,7 +95,7 @@ apiRouter.get('/nedb', async (req, res, next) => {
       return res.json({ data, count })
     }
   } catch (e) {
-    next(e)
+    return next(e)
   }
 })
 
@@ -109,15 +107,24 @@ apiRouter.get('/mongodb', async (req, res, next) => {
 
     const col = mongoClient.db('search').collection('q')
 
-    const { q, offset, limit, sort, order } = parseQuery(req.query)
-    const r = qSearch.parse(q)
+    const { offset, limit, sort, order, r } = parseQuery(req.query)
 
     if (r.nonSchema.includes('is:unique')) {
+      const ids = (await col.aggregate([
+        { $match: r.cond },
+        { $group: { _id: '$h', id: { $first: '$_id' } } },
+        { $project: { _id: 0 } }
+      ]).toArray()).map((el) => el.id)
+
       const data = await col.aggregate([
-        { distinct: 'search', key: 'h', query: r.cond }
+        { $match: { _id: { $in: ids } } },
+        { $sort: { [sort || '_id']: order === 'desc' ? -1 : 1 } },
+        { $skip: offset },
+        { $limit: limit }
       ]).toArray()
+
       const count = (await col.aggregate([
-        { distinct: 'search', key: 'h', query: r.cond },
+        { $match: { _id: { $in: ids } } },
         { $count: 'count' }
       ]).toArray())[0].count
 
@@ -133,13 +140,13 @@ apiRouter.get('/mongodb', async (req, res, next) => {
       return res.json({ data, count })
     }
   } catch (e) {
-    next(e)
+    return next(e)
   }
 })
 
 function parseQuery (query: any) {
-  const { q, offset: offsetStr, limit: limitStr, sort, order } = Record({
-    q: String,
+  const { q = '', offset: offsetStr, limit: limitStr, sort, order } = Record({
+    q: String.Or(Undefined),
     offset: String,
     limit: String.Or(Undefined),
     sort: String.Or(Undefined),
@@ -148,7 +155,11 @@ function parseQuery (query: any) {
 
   const offset = parseInt(offsetStr)
   const limit = parseInt(limitStr || '') || 5
-  return { q, offset, limit, sort, order }
+
+  const r = qSearch.parse(q)
+  console.dir(r.cond, { depth: null })
+
+  return { q, offset, limit, sort, order, r }
 }
 
 function sortBy (arr: any[], key: string, desc?: boolean) {

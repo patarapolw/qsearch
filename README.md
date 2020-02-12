@@ -2,9 +2,11 @@
 
 Search a database with a string. Designed for end-users.
 
-## Example
+## Demo
 
-See <https://qsearch.herokuapp.com>
+See <https://q2search.herokuapp.com>
+
+This demo also allows `is:unique` as a special operator.
 
 ## Usage
 
@@ -12,9 +14,12 @@ This is inspired from [lunr.js](https://lunrjs.com/guides/searching.html) search
 
 - Default connector is `AND`.
 - To make an `OR`, use `?expression`.
-- `+expression` means exactly match.
+- Search is normally case-insensitive, i.e. `a` and `A` means the same thing.
+- `+expression` means exactly match, and case-sensitive.
 - `-expression` means negation.
 - Not only `:`, but also `>` and `<` is used to specify comparison. For example, `+foo:bar`, `count>1`.
+- `NULL` is a special keyword, meaning, not exists, `undefined`, or `null`.
+- `TRUE` and `FALSE` are special keywords, meaning, `true` and `false`, respectively.
 - Date comparison is enabled.
   - Special keyword: `NOW`.
   - `+1h` means next 1 hour. `-1h` mean 1 hour ago.
