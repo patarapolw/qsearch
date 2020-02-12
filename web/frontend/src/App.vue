@@ -10,6 +10,9 @@ section
     ul(style="flex-grow: 0;")
       li(:class="mode === 'NeDB' ? 'is-active' : ''")
         a(@click="mode = 'NeDB'") NeDB
+    ul(style="flex-grow: 0;")
+      li(:class="mode === 'Native' ? 'is-active' : ''")
+        a(@click="mode = 'Native'") Native
     ul(style="flex-grow: 1;")
     ul(style="flex-grow: 0;")
       a(href="https://github.com/patarapolw/qsearch" target="_blank")
@@ -117,7 +120,7 @@ export default class App extends Vue {
   }
 
   get sort () {
-    return this.$route.query.sort || 'frequency'
+    return this.$route.query.sort || 'name'
   }
 
   set sort (sort) {

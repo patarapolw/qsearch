@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@patarapolw/qsearch@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@patarapolw/qsearch/-/qsearch-1.0.0.tgz#b9eeb0650af4b9fd1da072400da0e7f3f312fde3"
-  integrity sha512-i4uM9sEavFQX6rM0YrXFYsVvSKbc174Ax8FaIoJ7sYUP4+ESAYMxmH2rNeiqmoxK+H3bJn9kR/Zu8pew3EsFqA==
+"@patarapolw/qsearch@1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@patarapolw/qsearch/-/qsearch-1.0.1.tgz#f42aa2c41ce6501a29b3a9b6666bcb290a8285b8"
+  integrity sha512-3hMSwTho4tOxsOjdmjLV5u8uPx4QgklUncYhK/GRwicR7CDaqWHEhLQ1Dd6tZTP68iQIDPu6LV5Dp3IviFC/vQ==
   dependencies:
     dot-prop "^5.2.0"
     escape-string-regexp "^2.0.0"

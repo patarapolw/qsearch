@@ -213,11 +213,14 @@ export default class QSearch {
               for (const op of Object.keys(v)) {
                 try {
                   if (op === '$regex') {
+                    if (!(v[op] instanceof RegExp)) {
+                      v[op] = new RegExp(v[op].toString(), 'i')
+                    }
+
                     if (Array.isArray(itemK)) {
-                      const r = new RegExp(v[op].toString(), 'i')
-                      return itemK.some((el) => r.test(el))
+                      return itemK.some((el) => v[op].test(el))
                     } else {
-                      return new RegExp(v[op].toString(), 'i').test((itemK as any).toString())
+                      return v[op].test((itemK as any).toString())
                     }
                   } else if (op === '$exists') {
                     return (itemK === null || itemK === undefined || itemK === '') !== v[op]

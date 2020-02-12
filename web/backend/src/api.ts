@@ -1,3 +1,5 @@
+import fs from 'fs'
+
 import { Router } from 'express'
 import { String, Undefined, Record } from 'runtypes'
 import Loki from 'lokijs'
@@ -7,7 +9,7 @@ import QSearch from '@patarapolw/qsearch'
 import dotProp from 'dot-prop'
 import serialize from 'serialize-javascript'
 
-import { schema } from './shared'
+import { schema, deserialize } from './shared'
 
 const apiRouter = Router()
 if (process.env.NODE_ENV === 'development') {
@@ -142,6 +144,29 @@ apiRouter.get('/mongodb', async (req, res, next) => {
 
       return res.json({ data, count, cond: serialize(r.cond) })
     }
+  } catch (e) {
+    return next(e)
+  }
+})
+
+apiRouter.get('/native', async (req, res, next) => {
+  try {
+    const col = deserialize(fs.readFileSync('assets/db.json', 'utf8')) as any[]
+    const { q, offset, limit, sort, order, r } = parseQuery(req.query)
+
+    let data = qSearch.filter(q, col)
+
+    if (r.nonSchema.includes('is:unique')) {
+      data = Object.values(data.reduce((acc, c: any) => {
+        return acc[c.h] ? acc : { ...acc, [c.h]: c }
+      }, {} as any))
+    }
+
+    return res.json({
+      data: sortBy(data, sort || '_id', order === 'desc').slice(offset, offset + limit),
+      count: data.length,
+      cond: serialize(r.cond)
+    })
   } catch (e) {
     return next(e)
   }

@@ -7,7 +7,7 @@ import mongo from 'mongodb'
 import stringify from 'fast-json-stable-stringify'
 import SparkMD5 from 'spark-md5'
 
-import './shared'
+import { clone, serialize } from './shared'
 
 /**
  * Types to check are -- Number (whole, decimal), String, Boolean, Date, Null, Undefined
@@ -77,29 +77,6 @@ async function main () {
     await col.insertMany(clone(allEntries))
     await client.close()
   })().catch(console.error)
-}
-
-function serialize (obj: any) {
-  return JSON.stringify(
-    obj,
-    function (k, v) {
-      if (this[k] instanceof Date) {
-        return ['__date__', +this[k]]
-      }
-      return v
-    }
-  )
-}
-
-function deserialize (s: string) {
-  return JSON.parse(
-    s,
-    (_, v) => (Array.isArray(v) && v[0] === '__date__') ? new Date(v[1]) : v
-  )
-}
-
-function clone<T> (obj: T): T {
-  return deserialize(serialize(obj))
 }
 
 function hash (obj: any) {

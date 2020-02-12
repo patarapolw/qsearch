@@ -10,6 +10,8 @@ This demo also allows `is:unique` as a special operator.
 
 See [/web/backend/src/schema.ts](/web/backend/src/schema.ts) and [/web/backend/src/shared.ts](/web/backend/src/shared.ts) for schema and search options, respectively.
 
+This compares between MongoDB, LokiJS, NeDB, and native `Array.filter`.
+
 ## Usage
 
 This is inspired from [lunr.js](https://lunrjs.com/guides/searching.html) search by fields, if specified, with some major differences.
