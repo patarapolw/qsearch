@@ -4,7 +4,7 @@ Search a database with a string. Designed for end-users.
 
 ## Example
 
-See <https://q-search.herokuapp.com>
+See <https://qsearch.herokuapp.com>
 
 ## Usage
 

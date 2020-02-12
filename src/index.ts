@@ -50,10 +50,7 @@ export default class QSearch {
   }
 
   parse (q: string): IQSearchResult {
-    const cond = {
-      $or: [] as any[]
-    }
-
+    let $or = [] as any[]
     const $and = [] as any[]
     const nonSchema = [] as string[]
 
@@ -137,7 +134,7 @@ export default class QSearch {
         subCond = addOp(k, opK, v)
       } else if (this.schema) {
         subCond = {
-          $or: Object.entries(this.schema)
+          [op === '-' ? '$and' : '$or']: Object.entries(this.schema)
             .filter(([_, v0]) => (!v0.type || v0.type === 'string') && v0.isAny !== false)
             .map(([k0, _]) => addOp(k0, opK, k))
             .filter((c) => c)
@@ -146,16 +143,17 @@ export default class QSearch {
 
       if (subCond) {
         if (op === '?') {
-          cond.$or.push(subCond)
+          $or.push(subCond)
         } else {
           $and.push(subCond)
         }
       }
     })
 
-    if ($and.length > 0) {
-      cond.$or.push({ $and })
-    }
+    $or.push($and.length > 1 ? { $and } : $and[0])
+    $or = $or.filter(el => el)
+
+    const cond = $or.length > 1 ? { $or } : ($or[0] || {})
 
     return { cond, nonSchema }
   }

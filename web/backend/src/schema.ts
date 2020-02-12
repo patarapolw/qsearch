@@ -4,20 +4,28 @@ import faker from 'faker'
 import NeDB from 'nedb-promises'
 import Loki from 'lokijs'
 import mongo from 'mongodb'
+import stringify from 'fast-json-stable-stringify'
+import SparkMD5 from 'spark-md5'
+import { ISchema } from '@patarapolw/qsearch'
 
-try {
-  const env = require('dotenv').config({
-    path: '../backend/.env'
-  })
-  console.log(Object.keys(env.parsed))
-} catch (e) {}
+import './shared'
+
+export const schema: ISchema = {
+  frequency: { type: 'number' },
+  name: {},
+  description: {},
+  isCool: { type: 'boolean' },
+  date: { type: 'date' },
+  'data.a': { isAny: false },
+  'data.b': { isAny: false },
+  h: { isAny: false }
+}
 
 /**
  * Types to check are -- Number (whole, decimal), String, Boolean, Date, Null, Undefined
  */
-export function getEntry (id?: number) {
+function getEntry () {
   return {
-    id,
     frequency: faker.random.number(500) === 0
       ? faker.random.arrayElement([null, undefined])
       : faker.random.number(1e6) / 1e5,
@@ -51,24 +59,25 @@ export function getEntry (id?: number) {
  */
 async function main () {
   const allEntries: any[] = []
-  Array.from({ length: 1e4 }).map((_, i) => {
-    allEntries.push(getEntry(i))
+  Array.from({ length: 9000 }).map(() => {
+    const entry = getEntry()
+    allEntries.push({ ...entry, h: hash(entry) })
+  })
+  Array.from({ length: 1000 }).map(() => {
+    allEntries.push(faker.random.arrayElement(allEntries))
   })
 
   fs.writeFileSync('assets/db.json', serialize(allEntries))
 
   ;(async () => {
     const db = NeDB.create({ filename: 'assets/db.nedb' })
-    await db.ensureIndex({ fieldName: 'id', unique: true })
     await db.insert(clone(allEntries))
   })().catch(console.error)
 
   ;(async () => {
     const db = new Loki('assets/db.loki')
     await new Promise((resolve, reject) => db.loadDatabase({}, (err) => err ? reject(err) : resolve()))
-    const col = db.addCollection('q', {
-      unique: ['id']
-    })
+    const col = db.addCollection('q')
     col.insert(clone(allEntries))
     await new Promise((resolve, reject) => db.save((err) => err ? reject(err) : resolve()))
     await new Promise((resolve, reject) => db.close((err) => err ? reject(err) : resolve()))
@@ -77,7 +86,6 @@ async function main () {
   ;(async () => {
     const client = await mongo.connect(process.env.MONGO_URI!, { useNewUrlParser: true, useUnifiedTopology: true })
     const col = client.db('search').collection('q')
-    await col.createIndex({ id: 1 }, { unique: true })
     await col.insertMany(clone(allEntries))
     await client.close()
   })().catch(console.error)
@@ -104,6 +112,10 @@ function deserialize (s: string) {
 
 function clone<T> (obj: T): T {
   return deserialize(serialize(obj))
+}
+
+function hash (obj: any) {
+  return SparkMD5.hash(stringify(obj))
 }
 
 if (require.main === module) {

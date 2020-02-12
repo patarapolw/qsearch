@@ -28,7 +28,15 @@ const { spawnSafe } = require('./utils')
     fs.copyFileSync(`${__dirname}/public/${f}`, `${__dirname}/../dist/${f}`)
   })
 
-  const pkg = require(`${__dirname}/../server/package.json`)
+  fs.mkdirSync(`${__dirname}/../dist/assets`)
+
+  glob.sync('**/*', {
+    cwd: `${__dirname}/../backend/assets`
+  }).map((f) => {
+    fs.copyFileSync(`${__dirname}/../backend/assets/${f}`, `${__dirname}/../dist/assets/${f}`)
+  })
+
+  const pkg = require(`${__dirname}/../backend/package.json`)
 
   delete pkg.dependencies
   delete pkg.devDependencies
