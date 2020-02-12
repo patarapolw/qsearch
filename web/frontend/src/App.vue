@@ -134,7 +134,7 @@ export default class App extends Vue {
   }
 
   get order () {
-    return this.$route.query.order || 'desc'
+    return this.$route.query.order || 'asc'
   }
 
   set order (order) {
