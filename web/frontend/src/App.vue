@@ -66,7 +66,7 @@ export default class App extends Vue {
     { field: 'name', label: 'name', width: 150 },
     { field: 'description', label: 'description' },
     { field: 'isCool', label: 'isCool', width: 100 },
-    { field: 'date', label: 'date', width: 200 },
+    { field: 'date', label: 'date', width: 250 },
     { field: 'data.a', label: 'data.a', width: 150 },
     { field: 'data.b', label: 'data.b', width: 150 }
   ]
