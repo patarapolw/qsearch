@@ -1,15 +1,18 @@
 {
-  "name": "q-search",
-  "version": "1.0.0",
+  "name": "@patarapolw/qsearch",
+  "version": "0.1.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "repository": "https://github.com/patarapolw/q-search.git",
+  "repository": "https://github.com/patarapolw/qsearch.git",
   "author": "Pacharapol Withayasakpunt <patarapolw@gmail.com> (https://polvcode.dev)",
   "license": "MIT",
   "files": [
     "lib",
     "src"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -P src/tsconfig.json"
   },
