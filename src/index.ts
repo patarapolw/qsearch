@@ -16,6 +16,7 @@ export default class QSearch {
   constructor (
     // eslint-disable-next-line no-unused-vars
     public options: {
+      dialect?: 'mongodb' | 'lokijs' | 'nedb' | 'native' | 'liteorm'
       schema?: ISchema
       nonSchemaKeys?: string[]
       /**
@@ -31,6 +32,14 @@ export default class QSearch {
       normalizeDates?: boolean | ((d: any) => Date | string | null)
     } = {}
   ) {}
+
+  get dialect () {
+    return this.options.dialect || 'mongo'
+  }
+
+  get hasSubstrSupport () {
+    return ['native', 'liteorm'].includes(this.dialect)
+  }
 
   get schema () {
     return this.options.schema || {} as ISchema
@@ -109,7 +118,11 @@ export default class QSearch {
           return { [k]: v }
         } else if (op === '-') {
           if (typeof v === 'string' && !isDate) {
-            v = { $regex: new RegExp(`^((?!${escapeRegexp(v)}).)*$`, 'i') }
+            if (this.hasSubstrSupport) {
+              v = { $nsubstr: v }
+            } else {
+              v = { $regex: new RegExp(`^((?!${escapeRegexp(v)}).)*$`, 'i') }
+            }
           } else if (opK === '>' && (typeof v === 'number' || isDate)) {
             v = { $lte: v }
           } else if (opK === '<' && (typeof v === 'number' || isDate)) {
@@ -121,7 +134,11 @@ export default class QSearch {
           return { [k]: v }
         } else {
           if (typeof v === 'string' && !isDate) {
-            v = { $regex: new RegExp(escapeRegexp(v), 'i') }
+            if (this.hasSubstrSupport) {
+              v = { $substr: v }
+            } else {
+              v = { $regex: new RegExp(escapeRegexp(v), 'i') }
+            }
           } else if (opK === '>' && (typeof v === 'number' || isDate)) {
             v = { $gt: v }
           } else if (opK === '<' && (typeof v === 'number' || isDate)) {
@@ -192,19 +209,19 @@ export default class QSearch {
   }
 
   filter<T> (q: string, item: T[]): T[] {
-    return item.filter(it => this._condFilter(this.parse(q).cond)(it))
+    return item.filter(it => this.filterFunction(this.parse(q).cond)(it))
   }
 
-  private _condFilter (cond: any) {
+  filterFunction (cond: any) {
     return (item: Record<string, any>): boolean => {
       for (const [k, v] of Object.entries<any>(cond)) {
         if (k[0] === '$') {
           if (k === '$and') {
-            return v.every((x: Record<string, any>) => this._condFilter(x)(item))
+            return v.every((x: Record<string, any>) => this.filterFunction(x)(item))
           } else if (k === '$or') {
-            return v.some((x: Record<string, any>) => this._condFilter(x)(item))
+            return v.some((x: Record<string, any>) => this.filterFunction(x)(item))
           } else if (k === '$nor') {
-            return !v.some((x: Record<string, any>) => this._condFilter(x)(item))
+            return !v.some((x: Record<string, any>) => this.filterFunction(x)(item))
           }
         } else {
           const itemK = dotProp.get<any>(item, k)
@@ -223,6 +240,22 @@ export default class QSearch {
                       return itemK.some((el) => v[op].test(el))
                     } else {
                       return v[op].test((itemK as any).toString())
+                    }
+                  } else if (op === '$substr') {
+                    if (Array.isArray(itemK)) {
+                      return itemK.some((el) => el.toString().toLocaleLowerCase()
+                        .includes(v[op].toString().toLocaleLowerCase()))
+                    } else {
+                      return itemK.toString().toLocaleLowerCase()
+                        .includes(v[op].toString().toLocaleLowerCase())
+                    }
+                  } else if (op === '$nsubstr') {
+                    if (Array.isArray(itemK)) {
+                      return itemK.every((el) => !el.toString().toLocaleLowerCase()
+                        .includes(v[op].toString().toLocaleLowerCase()))
+                    } else {
+                      return !itemK.toString().toLocaleLowerCase()
+                        .includes(v[op].toString().toLocaleLowerCase())
                     }
                   } else if (op === '$exists') {
                     return (itemK === null || itemK === undefined || itemK === '') !== v[op]
