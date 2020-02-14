@@ -7,9 +7,21 @@ import mongodb, { MongoClient } from 'mongodb'
 import NeDB from 'nedb-promises'
 import QSearch from '@patarapolw/qsearch'
 import dotProp from 'dot-prop'
-import serialize from 'serialize-javascript'
+import { Db as LiteOrm } from 'liteorm'
 
 import { schema, deserialize } from './shared'
+import { DbEntry } from './schema'
+
+declare global {
+  interface RegExp {
+    toJSON(): string
+  }
+}
+
+// eslint-disable-next-line no-extend-native
+RegExp.prototype.toJSON = function () {
+  return this.toString()
+}
 
 const apiRouter = Router()
 if (process.env.NODE_ENV === 'development') {
@@ -23,14 +35,7 @@ if (process.env.NODE_ENV === 'development') {
 let loki: Loki
 let mongoClient: MongoClient
 let nedb: NeDB
-
-const qSearch = new QSearch({
-  schema,
-  /**
-   * allows `is:unique`
-   */
-  nonSchemaKeys: ['is']
-})
+let sql: LiteOrm
 
 apiRouter.get('/lokijs', async (req, res, next) => {
   try {
@@ -43,9 +48,18 @@ apiRouter.get('/lokijs', async (req, res, next) => {
       })
     }
 
+    const qSearch = new QSearch({
+      dialect: 'lokijs',
+      schema,
+      /**
+       * allows `is:unique`
+       */
+      nonSchemaKeys: ['is']
+    })
+
     const col = loki.getCollection('q')
 
-    const { offset, limit, sort, order, r } = parseQuery(req.query)
+    const { offset, limit, sort, order, r } = parseQuery(req.query, qSearch)
 
     if (r.nonSchema.includes('is:unique')) {
       const data = sortBy(Object.values(col.find(r.cond).reduce((acc, c) => {
@@ -55,7 +69,7 @@ apiRouter.get('/lokijs', async (req, res, next) => {
       return res.json({
         data: data.slice(offset, offset + limit),
         count: data.length,
-        cond: serialize(r.cond)
+        cond: JSON.stringify(r.cond)
       })
     } else {
       const data = col.chain()
@@ -66,7 +80,7 @@ apiRouter.get('/lokijs', async (req, res, next) => {
         .data()
       const count = col.count(r.cond)
 
-      return res.json({ data, count, cond: serialize(r.cond) })
+      return res.json({ data, count, cond: JSON.stringify(r.cond) })
     }
   } catch (e) {
     return next(e)
@@ -78,7 +92,17 @@ apiRouter.get('/nedb', async (req, res, next) => {
     if (!nedb) {
       nedb = NeDB.create({ filename: 'assets/db.nedb' })
     }
-    const { offset, limit, sort, order, r } = parseQuery(req.query)
+
+    const qSearch = new QSearch({
+      dialect: 'nedb',
+      schema,
+      /**
+       * allows `is:unique`
+       */
+      nonSchemaKeys: ['is']
+    })
+
+    const { offset, limit, sort, order, r } = parseQuery(req.query, qSearch)
 
     if (r.nonSchema.includes('is:unique')) {
       const data = sortBy(Object.values((await nedb.find(r.cond)).reduce((acc, c: any) => {
@@ -88,7 +112,7 @@ apiRouter.get('/nedb', async (req, res, next) => {
       return res.json({
         data: data.slice(offset, offset + limit),
         count: data.length,
-        cond: serialize(r.cond)
+        cond: JSON.stringify(r.cond)
       })
     } else {
       const data = await nedb.find(r.cond)
@@ -97,7 +121,7 @@ apiRouter.get('/nedb', async (req, res, next) => {
         .limit(limit)
       const count = await nedb.count(r.cond)
 
-      return res.json({ data, count, cond: serialize(r.cond) })
+      return res.json({ data, count, cond: JSON.stringify(r.cond) })
     }
   } catch (e) {
     return next(e)
@@ -110,9 +134,18 @@ apiRouter.get('/mongodb', async (req, res, next) => {
       mongoClient = await mongodb.connect(process.env.MONGO_URI!, { useNewUrlParser: true, useUnifiedTopology: true })
     }
 
+    const qSearch = new QSearch({
+      dialect: 'mongodb',
+      schema,
+      /**
+       * allows `is:unique`
+       */
+      nonSchemaKeys: ['is']
+    })
+
     const col = mongoClient.db('search').collection('q')
 
-    const { offset, limit, sort, order, r } = parseQuery(req.query)
+    const { offset, limit, sort, order, r } = parseQuery(req.query, qSearch)
 
     if (r.nonSchema.includes('is:unique')) {
       const ids = (await col.aggregate([
@@ -133,7 +166,7 @@ apiRouter.get('/mongodb', async (req, res, next) => {
         { $count: 'count' }
       ]).toArray())[0].count
 
-      return res.json({ data, count, cond: serialize(r.cond) })
+      return res.json({ data, count, cond: JSON.stringify(r.cond) })
     } else {
       const data = await col.find(r.cond)
         .sort({ [sort || '_id']: order === 'desc' ? -1 : 1 })
@@ -142,7 +175,7 @@ apiRouter.get('/mongodb', async (req, res, next) => {
         .toArray()
       const count = await col.find(r.cond).count()
 
-      return res.json({ data, count, cond: serialize(r.cond) })
+      return res.json({ data, count, cond: JSON.stringify(r.cond) })
     }
   } catch (e) {
     return next(e)
@@ -151,8 +184,17 @@ apiRouter.get('/mongodb', async (req, res, next) => {
 
 apiRouter.get('/native', async (req, res, next) => {
   try {
+    const qSearch = new QSearch({
+      dialect: 'native',
+      schema,
+      /**
+       * allows `is:unique`
+       */
+      nonSchemaKeys: ['is']
+    })
+
     const col = deserialize(fs.readFileSync('assets/db.json', 'utf8')) as any[]
-    const { q, offset, limit, sort, order, r } = parseQuery(req.query)
+    const { q, offset, limit, sort, order, r } = parseQuery(req.query, qSearch)
 
     let data = qSearch.filter(q, col)
 
@@ -165,14 +207,63 @@ apiRouter.get('/native', async (req, res, next) => {
     return res.json({
       data: sortBy(data, sort || '_id', order === 'desc').slice(offset, offset + limit),
       count: data.length,
-      cond: serialize(r.cond)
+      cond: JSON.stringify(r.cond)
     })
   } catch (e) {
     return next(e)
   }
 })
 
-function parseQuery (query: any) {
+apiRouter.get('/liteorm', async (req, res, next) => {
+  try {
+    if (!sql) {
+      sql = await LiteOrm.connect('assets/db.sqlite')
+    }
+
+    const qSearch = new QSearch({
+      dialect: 'liteorm',
+      schema,
+      /**
+       * allows `is:unique`
+       */
+      nonSchemaKeys: ['is']
+    })
+
+    const col = await sql.collection(new DbEntry())
+    const { offset, limit, sort, order, r } = parseQuery(req.query, qSearch)
+
+    if (r.nonSchema.includes('is:unique')) {
+      const count = ((await col.find(r.cond, { 'COUNT(_id)': 'count' }, { postfix: 'DISTINCT BY h' }))[0] as any).count
+      const data = await col.find(r.cond, null, {
+        postfix: 'DISTINCT BY h',
+        sort: {
+          key: (sort || '_id') as any,
+          desc: order === 'desc'
+        },
+        offset,
+        limit
+      })
+
+      return res.json({ count, data, cond: JSON.stringify(r.cond) })
+    } else {
+      const count = ((await col.find(r.cond, { 'COUNT(_id)': 'count' }))[0] as any).count
+      const data = await col.find(r.cond, null, {
+        sort: {
+          key: (sort || '_id') as any,
+          desc: order === 'desc'
+        },
+        offset,
+        limit
+      })
+
+      return res.json({ count, data, cond: JSON.stringify(r.cond) })
+    }
+  } catch (e) {
+    return next(e)
+  }
+})
+
+function parseQuery (query: any, qSearch: QSearch) {
   const { q = '', offset: offsetStr, limit: limitStr, sort, order } = Record({
     q: String.Or(Undefined),
     offset: String,

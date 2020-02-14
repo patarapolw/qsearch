@@ -16,6 +16,9 @@ export default class QSearch {
   constructor (
     // eslint-disable-next-line no-unused-vars
     public options: {
+      /**
+       * Default to "mongodb"
+       */
       dialect?: 'mongodb' | 'lokijs' | 'nedb' | 'native' | 'liteorm'
       schema?: ISchema
       nonSchemaKeys?: string[]
@@ -37,6 +40,9 @@ export default class QSearch {
     return this.options.dialect || 'mongo'
   }
 
+  /**
+   * Meaning case-insensitve substring
+   */
   get hasSubstrSupport () {
     return ['native', 'liteorm'].includes(this.dialect)
   }
@@ -156,24 +162,41 @@ export default class QSearch {
       }
 
       if (v === 'NULL') {
-        if (op === '-') {
-          $and.push(
-            { [k]: { $exists: true } },
-            { [k]: { $ne: null } }
-          )
-          return
-        } else if (op === '?') {
-          $or.push(
-            { [k]: { $exists: false } },
-            { [k]: null }
-          )
+        if (this.dialect === 'liteorm') {
+          if (op === '-') {
+            $and.push(
+              { [k]: { $exists: true } }
+            )
+            return
+          } else if (op === '?') {
+            $or.push(
+              { [k]: { $exists: false } }
+            )
+          } else {
+            $and.push(
+              { [k]: { $exists: false } }
+            )
+          }
         } else {
-          $and.push({
-            $or: [
+          if (op === '-') {
+            $and.push(
+              { [k]: { $exists: true } },
+              { [k]: { $ne: null } }
+            )
+            return
+          } else if (op === '?') {
+            $or.push(
               { [k]: { $exists: false } },
               { [k]: null }
-            ]
-          })
+            )
+          } else {
+            $and.push({
+              $or: [
+                { [k]: { $exists: false } },
+                { [k]: null }
+              ]
+            })
+          }
         }
         return
       }
