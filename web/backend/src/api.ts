@@ -233,9 +233,9 @@ apiRouter.get('/liteorm', async (req, res, next) => {
     const { offset, limit, sort, order, r } = parseQuery(req.query, qSearch)
 
     if (r.nonSchema.includes('is:unique')) {
-      const count = ((await col.find(r.cond, { 'COUNT(_id)': 'count' }, { postfix: 'DISTINCT BY h' }))[0] as any).count
+      const count = (await col.find(r.cond, { h: 'h' }, { postfix: 'GROUP BY h' })).length
       const data = await col.find(r.cond, null, {
-        postfix: 'DISTINCT BY h',
+        postfix: 'GROUP BY h',
         sort: {
           key: (sort || '_id') as any,
           desc: order === 'desc'
@@ -246,7 +246,7 @@ apiRouter.get('/liteorm', async (req, res, next) => {
 
       return res.json({ count, data, cond: JSON.stringify(r.cond) })
     } else {
-      const count = ((await col.find(r.cond, { 'COUNT(_id)': 'count' }))[0] as any).count
+      const count = ((await col.find(r.cond, { 'COUNT(_id)': 'count' }, { limit: 1 }))[0] as any).count
       const data = await col.find(r.cond, null, {
         sort: {
           key: (sort || '_id') as any,
