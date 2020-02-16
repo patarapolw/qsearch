@@ -16,7 +16,7 @@
     "dot-prop": "^5.2.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "liteorm": "0.4.6",
+    "liteorm": "^0.5.3",
     "lokijs": "^1.5.8",
     "mongodb": "^3.5.2",
     "morgan": "^1.9.1",

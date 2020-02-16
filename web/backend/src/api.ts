@@ -7,7 +7,7 @@ import mongodb, { MongoClient } from 'mongodb'
 import NeDB from 'nedb-promises'
 import QSearch from '@patarapolw/qsearch'
 import dotProp from 'dot-prop'
-import { Db as LiteOrm } from 'liteorm'
+import { Db as LiteOrm, Collection } from 'liteorm'
 
 import { schema, deserialize } from './shared'
 import { DbEntry } from './schema'
@@ -229,7 +229,7 @@ apiRouter.get('/liteorm', async (req, res, next) => {
       nonSchemaKeys: ['is']
     })
 
-    const col = await sql.collection(new DbEntry())
+    const col = await Collection.make(DbEntry).init(sql)
     const { offset, limit, sort, order, r } = parseQuery(req.query, qSearch)
 
     if (r.nonSchema.includes('is:unique')) {

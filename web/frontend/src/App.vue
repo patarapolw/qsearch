@@ -151,6 +151,16 @@ export default class App extends Vue {
   }
 
   async created () {
+    if (!this.$route.query.q) {
+      this.$router.push({
+        ...this.$route,
+        query: {
+          ...this.$route.query,
+          q: '-name:NULL'
+        }
+      })
+    }
+
     this.load()
   }
 

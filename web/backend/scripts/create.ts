@@ -6,7 +6,7 @@ import Loki from 'lokijs'
 import mongo from 'mongodb'
 import stringify from 'fast-json-stable-stringify'
 import SparkMD5 from 'spark-md5'
-import { Db } from 'liteorm'
+import { Db, Collection } from 'liteorm'
 
 import { clone, serialize } from '../src/shared'
 import { DbEntry } from '../src/schema'
@@ -82,7 +82,7 @@ async function main () {
 
   ;(async () => {
     const db = await Db.connect('assets/db.sqlite')
-    const col = await db.collection(new DbEntry())
+    const col = await Collection.make(DbEntry).init(db)
 
     await Promise.all(clone(allEntries).map(async (el) => {
       try {
