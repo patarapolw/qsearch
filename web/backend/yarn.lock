@@ -2218,10 +2218,10 @@ lie@3.1.1:
   dependencies:
     immediate "~3.0.5"
 
-liteorm@^0.5.3:
-  version "0.5.3"
-  resolved "https://registry.yarnpkg.com/liteorm/-/liteorm-0.5.3.tgz#d5b713dae85af7a7a9ae8dc50ade921d697dcccb"
-  integrity sha512-DRA1AfgARb13/bw/dpAqk9xAuOgHunqbBjcvlpnNAc8uwtGAU65Aj72Nf2Dcdr04BoM0wY0tYJAgaF60l4H7Pw==
+liteorm@^0.5.4:
+  version "0.5.4"
+  resolved "https://registry.yarnpkg.com/liteorm/-/liteorm-0.5.4.tgz#dfe508c13727d306353069086a7a323d8fe80a61"
+  integrity sha512-RQLlGSGo2nor49kO8Wf91hZMXImvo5areeqO+sdNWsMCOw9ikSO2zobSy8cOiqGGoBVOqThS7M+MV0rdYeP0JA==
   dependencies:
     bluebird "^3.5.5"
     bluebird-global "^1.0.1"
