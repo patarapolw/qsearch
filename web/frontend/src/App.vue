@@ -29,7 +29,10 @@ section
             href="https://github.com/patarapolw/qsearch"
             target="_blank"
           ) &#x2753;
-      b-input(v-model="q" placeholder="Please search to view results")
+      b-input(
+        v-model="q" placeholder="Please search to view results" type="search"
+        spellcheck="false" autocomplete="off"
+      )
     div(style="flex-grow: 1; position: relative;")
       b-loading(v-if="!output" active)
       b-table(
