@@ -1422,12 +1422,10 @@ any-promise@^1.0.0:
   resolved "https://registry.yarnpkg.com/any-promise/-/any-promise-1.3.0.tgz#abc6afeedcea52e809cdc0376aed3ce39635d17f"
   integrity sha1-q8av7tzqUugJzcA3au0845Y10X8=
 
-any-serialize@^1.4.10:
-  version "1.4.10"
-  resolved "https://registry.yarnpkg.com/any-serialize/-/any-serialize-1.4.10.tgz#ff9a19bc90baf01eb692f288e3d86284142e8cf1"
-  integrity sha512-DPiwYXyVY4ktiTf1YZZsofK2+reMUCtsE77A/X2S1F6JgQ5RdpiSlbbl79qL/S/oeoZxKV5O62i49OLiO9AvBw==
-  optionalDependencies:
-    esm "^3.2.25"
+any-serialize@^1.4.11:
+  version "1.4.11"
+  resolved "https://registry.yarnpkg.com/any-serialize/-/any-serialize-1.4.11.tgz#a59123efa24e10d7f207286e115b51dd06af2b93"
+  integrity sha512-rFy5V8dfkbYPPB93gZmuXhR5o3z7hIuJvFoKpULzIAshn4Y78tNkR3afRyaJxsujxdlRTDHCMCMFYMZMEIjpYg==
 
 anymatch@^2.0.0:
   version "2.0.0"
@@ -3221,11 +3219,6 @@ eslint-scope@^4.0.3:
   dependencies:
     esrecurse "^4.1.0"
     estraverse "^4.1.1"
-
-esm@^3.2.25:
-  version "3.2.25"
-  resolved "https://registry.yarnpkg.com/esm/-/esm-3.2.25.tgz#342c18c29d56157688ba5ce31f8431fbb795cc10"
-  integrity sha512-U1suiZ2oDVWv4zPO56S0NcR5QriEahGtdN2OR6FiOG4WJvcjBVFB0qI4+eKoWFH483PKGuLuu6V8Z4T5g63UVA==
 
 esprima@^4.0.0:
   version "4.0.1"

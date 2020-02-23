@@ -7,7 +7,7 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "any-serialize": "^1.4.10",
+    "any-serialize": "^1.4.11",
     "axios": "^0.19.2",
     "buefy": "^0.8.10",
     "core-js": "^3.6.4",
