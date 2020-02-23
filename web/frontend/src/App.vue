@@ -61,6 +61,9 @@ section
 import { Vue, Component, Watch } from 'vue-property-decorator'
 import axios from 'axios'
 import dayjs from 'dayjs'
+import { Serialize } from 'any-serialize'
+
+const ser = new Serialize()
 
 @Component
 export default class App extends Vue {
@@ -190,7 +193,7 @@ export default class App extends Vue {
           .reduce((acc, [k, v]) => ({ ...acc, [k]: v}), {})
       }))
 
-      console.info(r.data)
+      console.info(ser.parse(r.data.cond))
     } catch (e) {
       console.error(e)
       Vue.set(this, 'output', [])

@@ -4,12 +4,14 @@ import faker from 'faker'
 import NeDB from 'nedb-promises'
 import Loki from 'lokijs'
 import mongo from 'mongodb'
-import stringify from 'fast-json-stable-stringify'
-import SparkMD5 from 'spark-md5'
-import { Db, Collection } from 'liteorm'
+import { Db } from 'liteorm'
+import { Serialize } from 'any-serialize'
+import dotenv from 'dotenv'
 
-import { clone, serialize } from '../src/shared'
-import { DbEntry } from '../src/schema'
+import { dbEntry } from '../src/schema'
+
+dotenv.config()
+const ser = new Serialize()
 
 /**
  * Types to check are -- Number (whole, decimal), String, Boolean, Date, Null, Undefined
@@ -48,27 +50,27 @@ function getEntry () {
  * Populate 10,000 entries
  */
 async function main () {
-  const allEntries: any[] = []
+  const allEntries: (ReturnType<typeof getEntry> & { h: string })[] = []
   Array.from({ length: 9000 }).map(() => {
     const entry = getEntry()
-    allEntries.push({ ...entry, h: hash(entry) })
+    allEntries.push({ ...entry, h: ser.hash(entry) })
   })
   Array.from({ length: 1000 }).map(() => {
     allEntries.push(faker.random.arrayElement(allEntries))
   })
 
-  fs.writeFileSync('assets/db.json', serialize(allEntries))
+  fs.writeFileSync('assets/db.json', ser.stringify(allEntries))
 
   ;(async () => {
     const db = NeDB.create({ filename: 'assets/db.nedb' })
-    await db.insert(clone(allEntries))
+    await db.insert(ser.clone(allEntries))
   })().catch(console.error)
 
   ;(async () => {
     const db = new Loki('assets/db.loki')
     await new Promise((resolve, reject) => db.loadDatabase({}, (err) => err ? reject(err) : resolve()))
     const col = db.addCollection('q')
-    col.insert(clone(allEntries))
+    col.insert(ser.clone(allEntries))
     await new Promise((resolve, reject) => db.save((err) => err ? reject(err) : resolve()))
     await new Promise((resolve, reject) => db.close((err) => err ? reject(err) : resolve()))
   })().catch(console.error)
@@ -76,17 +78,17 @@ async function main () {
   ;(async () => {
     const client = await mongo.connect(process.env.MONGO_URI!, { useNewUrlParser: true, useUnifiedTopology: true })
     const col = client.db('search').collection('q')
-    await col.insertMany(clone(allEntries))
+    await col.insertMany(ser.clone(allEntries))
     await client.close()
   })().catch(console.error)
 
   ;(async () => {
     const db = await Db.connect('assets/db.sqlite')
-    const col = await Collection.make(DbEntry).init(db)
+    await db.init([dbEntry])
 
-    await Promise.all(clone(allEntries).map(async (el) => {
+    await Promise.all(ser.clone(allEntries).map(async (el) => {
       try {
-        await col.create(el)
+        await db.create(dbEntry)(el)
       } catch (e) {
         console.error(e)
       }
@@ -94,10 +96,6 @@ async function main () {
 
     await db.close()
   })().catch(console.error)
-}
-
-function hash (obj: any) {
-  return SparkMD5.hash(stringify(obj))
 }
 
 if (require.main === module) {

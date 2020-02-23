@@ -1,15 +1,17 @@
 import fs from 'fs'
 
-import { Db, Collection } from 'liteorm'
+import { Db } from 'liteorm'
+import { Serialize } from 'any-serialize'
 
-import { clone, deserialize } from '../src/shared'
-import { DbEntry } from '../src/schema'
+import { dbEntry } from '../src/schema'
+
+const ser = new Serialize()
 
 /**
  * Populate 10,000 entries
  */
 async function main () {
-  const allEntries: any[] = deserialize(fs.readFileSync('assets/db.json', 'utf8'))
+  const allEntries: any[] = ser.parse(fs.readFileSync('assets/db.json', 'utf8'))
 
   // ;(async () => {
   //   const db = NeDB.create({ filename: 'assets/db.nedb' })
@@ -34,11 +36,11 @@ async function main () {
 
   ;(async () => {
     const db = await Db.connect('assets/db.sqlite')
-    const col = await Collection.make(DbEntry).init(db)
+    await db.init([dbEntry])
 
-    await Promise.all(clone(allEntries).map(async (el) => {
+    await Promise.all(ser.clone(allEntries).map(async (el) => {
       try {
-        await col.create(el)
+        await db.create(dbEntry)(el)
       } catch (e) {
         console.error(e)
       }

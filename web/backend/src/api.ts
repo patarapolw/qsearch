@@ -7,21 +7,13 @@ import mongodb, { MongoClient } from 'mongodb'
 import NeDB from 'nedb-promises'
 import QSearch from '@patarapolw/qsearch'
 import dotProp from 'dot-prop'
-import { Db as LiteOrm, Collection } from 'liteorm'
+import { Db as LiteOrm } from 'liteorm'
+import { Serialize } from 'any-serialize'
 
-import { schema, deserialize } from './shared'
-import { DbEntry } from './schema'
+import { schema } from './shared'
+import { dbEntry } from './schema'
 
-declare global {
-  interface RegExp {
-    toJSON(): string
-  }
-}
-
-// eslint-disable-next-line no-extend-native
-RegExp.prototype.toJSON = function () {
-  return this.toString()
-}
+const ser = new Serialize()
 
 const apiRouter = Router()
 if (process.env.NODE_ENV === 'development') {
@@ -69,7 +61,7 @@ apiRouter.get('/lokijs', async (req, res, next) => {
       return res.json({
         data: data.slice(offset, offset + limit),
         count: data.length,
-        cond: JSON.stringify(r.cond)
+        cond: ser.stringify(r.cond)
       })
     } else {
       const data = col.chain()
@@ -80,7 +72,7 @@ apiRouter.get('/lokijs', async (req, res, next) => {
         .data()
       const count = col.count(r.cond)
 
-      return res.json({ data, count, cond: JSON.stringify(r.cond) })
+      return res.json({ data, count, cond: ser.stringify(r.cond) })
     }
   } catch (e) {
     return next(e)
@@ -112,7 +104,7 @@ apiRouter.get('/nedb', async (req, res, next) => {
       return res.json({
         data: data.slice(offset, offset + limit),
         count: data.length,
-        cond: JSON.stringify(r.cond)
+        cond: ser.stringify(r.cond)
       })
     } else {
       const data = await nedb.find(r.cond)
@@ -121,7 +113,7 @@ apiRouter.get('/nedb', async (req, res, next) => {
         .limit(limit)
       const count = await nedb.count(r.cond)
 
-      return res.json({ data, count, cond: JSON.stringify(r.cond) })
+      return res.json({ data, count, cond: ser.stringify(r.cond) })
     }
   } catch (e) {
     return next(e)
@@ -166,7 +158,7 @@ apiRouter.get('/mongodb', async (req, res, next) => {
         { $count: 'count' }
       ]).toArray())[0].count
 
-      return res.json({ data, count, cond: JSON.stringify(r.cond) })
+      return res.json({ data, count, cond: ser.stringify(r.cond) })
     } else {
       const data = await col.find(r.cond)
         .sort({ [sort || '_id']: order === 'desc' ? -1 : 1 })
@@ -175,7 +167,7 @@ apiRouter.get('/mongodb', async (req, res, next) => {
         .toArray()
       const count = await col.find(r.cond).count()
 
-      return res.json({ data, count, cond: JSON.stringify(r.cond) })
+      return res.json({ data, count, cond: ser.stringify(r.cond) })
     }
   } catch (e) {
     return next(e)
@@ -193,7 +185,7 @@ apiRouter.get('/native', async (req, res, next) => {
       nonSchemaKeys: ['is']
     })
 
-    const col = deserialize(fs.readFileSync('assets/db.json', 'utf8')) as any[]
+    const col = ser.parse(fs.readFileSync('assets/db.json', 'utf8')) as any[]
     const { q, offset, limit, sort, order, r } = parseQuery(req.query, qSearch)
 
     let data = qSearch.filter(q, col)
@@ -207,7 +199,7 @@ apiRouter.get('/native', async (req, res, next) => {
     return res.json({
       data: sortBy(data, sort || '_id', order === 'desc').slice(offset, offset + limit),
       count: data.length,
-      cond: JSON.stringify(r.cond)
+      cond: ser.stringify(r.cond)
     })
   } catch (e) {
     return next(e)
@@ -229,34 +221,34 @@ apiRouter.get('/liteorm', async (req, res, next) => {
       nonSchemaKeys: ['is']
     })
 
-    const col = await Collection.make(DbEntry).init(sql)
+    await sql.init([dbEntry])
     const { offset, limit, sort, order, r } = parseQuery(req.query, qSearch)
 
     if (r.nonSchema.includes('is:unique')) {
-      const count = (await col.find(r.cond, { h: 'h' }, { postfix: 'GROUP BY h' })).length
-      const data = await col.find(r.cond, null, {
+      const count = (await sql.find(dbEntry)(r.cond, { h: dbEntry.c.h }, { postfix: 'GROUP BY h' })).length
+      const data = await sql.find(dbEntry)(r.cond, '*', {
         postfix: 'GROUP BY h',
         sort: {
-          key: (sort || '_id') as any,
+          key: (sort || 'ROWID') as any,
           desc: order === 'desc'
         },
         offset,
         limit
       })
 
-      return res.json({ count, data, cond: JSON.stringify(r.cond) })
+      return res.json({ count, data, cond: ser.stringify(r.cond) })
     } else {
-      const count = ((await col.find(r.cond, { 'COUNT(_id)': 'count' }, { limit: 1 }))[0] as any).count
-      const data = await col.find(r.cond, null, {
+      const count = ((await sql.find(dbEntry)(r.cond, { count: 'COUNT(ROWID)' }, { limit: 1 }))[0] as any).count
+      const data = await sql.find(dbEntry)(r.cond, '*', {
         sort: {
-          key: (sort || '_id') as any,
+          key: sort || 'ROWID',
           desc: order === 'desc'
         },
         offset,
         limit
       })
 
-      return res.json({ count, data, cond: JSON.stringify(r.cond) })
+      return res.json({ count, data, cond: ser.stringify(r.cond) })
     }
   } catch (e) {
     return next(e)

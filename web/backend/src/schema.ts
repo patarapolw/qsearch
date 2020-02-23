@@ -1,12 +1,14 @@
-import { prop, Table } from 'liteorm'
+import { prop, Table, Entity } from 'liteorm'
 
-@Table({ name: 'entry' })
-export class DbEntry {
-  @prop({ type: 'float', null: true }) frequency?: number | null
-  @prop({ type: 'string', null: true }) name?: string | null
-  @prop({ type: 'string', null: true }) description?: string | null
-  @prop({ type: 'boolean', null: true }) isCool?: boolean | null
-  @prop({ type: 'Date', null: true }) date?: Date | null
-  @prop({ type: 'JSON', null: true }) data?: { a?: string | null, b?: string | null } | null
+@Entity({ name: 'entry' })
+class DbEntry {
+  @prop({ type: 'float', null: true }) frequency?: number
+  @prop({ null: true }) name?: string
+  @prop({ null: true }) description?: string
+  @prop({ null: true }) isCool?: boolean
+  @prop({ null: true }) date?: Date
+  @prop({ null: true }) data?: { a?: string, b?: string }
   @prop() h!: string
 }
+
+export const dbEntry = new Table(DbEntry)
