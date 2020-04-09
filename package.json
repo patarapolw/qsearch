@@ -1,6 +1,6 @@
 {
   "name": "@patarapolw/qsearch",
-  "version": "1.1.1",
+  "version": "1.2.2",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "repository": "https://github.com/patarapolw/qsearch.git",
@@ -8,20 +8,20 @@
   "license": "MIT",
   "files": [
     "lib",
-    "src"
+    "src",
+    "tsconfig.json"
   ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "yarn prepack",
+    "build": "npm run prepack",
     "prepack": "tsc -P src/tsconfig.json",
     "test": "ts-mocha tests/**/*.spec.ts"
   },
   "dependencies": {
     "dot-prop": "^5.2.0",
-    "escape-string-regexp": "^2.0.0",
-    "shlex": "^2.0.1"
+    "escape-string-regexp": "^2.0.0"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",

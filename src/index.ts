@@ -1,6 +1,7 @@
-import shlex from 'shlex'
 import escapeRegexp from 'escape-string-regexp'
 import dotProp from 'dot-prop'
+
+import { split } from './shlex'
 
 export type ISchema = Record<string, {
   type?: 'string' | 'number' | 'date' | 'boolean'
@@ -69,7 +70,7 @@ export default class QSearch {
     const $and = [] as any[]
     const nonSchema = [] as string[]
 
-    shlex.split(q).map((el) => {
+    split(q).map((el) => {
       const [op] = /^[-+?]/.exec(el) || [] as string[]
       if (op) {
         el = el.substr(1)
@@ -255,31 +256,41 @@ export default class QSearch {
               for (const op of Object.keys(v)) {
                 try {
                   if (op === '$regex') {
-                    if (!(v[op] instanceof RegExp)) {
-                      v[op] = new RegExp(v[op].toString(), 'i')
+                    let cmp: RegExp
+
+                    if (v[op] instanceof RegExp) {
+                      cmp = v[op]
+                    } else {
+                      cmp = new RegExp(v[op].toString(), 'i')
                     }
 
-                    if (Array.isArray(itemK)) {
-                      return itemK.some((el) => v[op].test(el))
-                    } else {
-                      return v[op].test((itemK as any).toString())
-                    }
+                    const arr = Array.isArray(itemK) ? itemK : [itemK]
+
+                    return arr.some((el) => {
+                      return typeof el === 'string'
+                        ? cmp.test(el)
+                        : false
+                    })
                   } else if (op === '$substr') {
-                    if (Array.isArray(itemK)) {
-                      return itemK.some((el) => el.toString().toLocaleLowerCase()
-                        .includes(v[op].toString().toLocaleLowerCase()))
-                    } else {
-                      return itemK.toString().toLocaleLowerCase()
-                        .includes(v[op].toString().toLocaleLowerCase())
-                    }
+                    const cmp = v[op].toString()
+                    const arr = Array.isArray(itemK) ? itemK : [itemK]
+
+                    return arr.some((el) => {
+                      return typeof el === 'string'
+                        ? el.toLocaleLowerCase()
+                          .includes(cmp.toLocaleLowerCase())
+                        : false
+                    })
                   } else if (op === '$nsubstr') {
-                    if (Array.isArray(itemK)) {
-                      return itemK.every((el) => !el.toString().toLocaleLowerCase()
-                        .includes(v[op].toString().toLocaleLowerCase()))
-                    } else {
-                      return !itemK.toString().toLocaleLowerCase()
-                        .includes(v[op].toString().toLocaleLowerCase())
-                    }
+                    const cmp = v[op].toString()
+                    const arr = Array.isArray(itemK) ? itemK : [itemK]
+
+                    return arr.every((el) => {
+                      return typeof el === 'string'
+                        ? !el.toLocaleLowerCase()
+                          .includes(cmp.toLocaleLowerCase())
+                        : true
+                    })
                   } else if (op === '$exists') {
                     return (itemK === null || itemK === undefined || itemK === '') !== v[op]
                   } else {
