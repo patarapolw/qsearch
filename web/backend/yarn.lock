@@ -2,14 +2,13 @@
 # yarn lockfile v1
 
 
-"@patarapolw/qsearch@1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@patarapolw/qsearch/-/qsearch-1.1.1.tgz#58fb4c53a1a89f2981a88f848287e4ebd399aba1"
-  integrity sha512-Z7H3FX5WWYwGK4ZpVZqHBHQyhtqYOZaTW1FIWb6aspHgKgkym/YixpVDzI+pRK6Wa/oN/UhwJnKt/twOfJcL3g==
+"@patarapolw/qsearch@1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@patarapolw/qsearch/-/qsearch-1.2.2.tgz#fece95a0202a70a92a3632314829fc933419f4b3"
+  integrity sha512-2b+TigTTc9kidTL5BlEXbQJ2bfVGIubhYWZbAwsUh0lcb00L7/jabi3EVbEGLWyvOEZLj9S7pI9Dvtcie5OZjw==
   dependencies:
     dot-prop "^5.2.0"
     escape-string-regexp "^2.0.0"
-    shlex "^2.0.1"
 
 "@types/body-parser@*":
   version "1.19.0"
@@ -3527,11 +3526,6 @@ shellwords@^0.1.1:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/shellwords/-/shellwords-0.1.1.tgz#d6b9181c1a48d397324c84871efbcfc73fc0654b"
   integrity sha512-vFwSUfQvqybiICwZY5+DAWIPLKsWO31Q91JSKl3UYv+K5c2QRPzn0qzec6QPu1Qc9eHYItiP3NdJqNVqetYAww==
-
-shlex@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/shlex/-/shlex-2.0.1.tgz#f3dfa388400604928fdc2d50388f421b8895ddf6"
-  integrity sha512-XrweL4ORG4Y9E9VvqsAjQ0Dhr4oW3BP6d4IceL7EnRA5Y7KU+4wCFg9HMhFm7SxhVswKu9emOvblBr7J17Vqtg==
 
 signal-exit@^3.0.0:
   version "3.0.2"
