@@ -19,7 +19,7 @@
     "express": "^4.17.1",
     "liteorm": "^0.7.18",
     "lokijs": "^1.5.8",
-    "mongodb": "^3.5.2",
+    "mongodb": "^3.5.9",
     "morgan": "^1.9.1",
     "nedb-promises": "^4.0.1",
     "runtypes": "^4.1.0"
