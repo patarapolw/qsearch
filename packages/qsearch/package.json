@@ -1,0 +1,22 @@
+{
+  "name": "@patarapolw/qsearch",
+  "private": true,
+  "version": "0.1.0",
+  "description": "",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc -P src/tsconfig.json"
+  },
+  "keywords": [],
+  "author": "Pacharapol Withayasakpunt <polv@polv.cc> (https://www.polv.cc/)",
+  "license": "MIT",
+  "dependencies": {
+    "flexsearch": "^0.6.32"
+  },
+  "devDependencies": {
+    "faker": "^5.1.0",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.5"
+  }
+}

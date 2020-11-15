@@ -1,14 +1,16 @@
 export interface ISplitOptions {
-  brackets: [string, string][],
+  brackets: [string, string][]
   split: string
   escape: string
-  keepBrace?: boolean
 }
 
 export const defaultSplitOptions: ISplitOptions = {
-  brackets: [['"', '"'], ["'", "'"]],
+  brackets: [
+    ['"', '"'],
+    ["'", "'"],
+  ],
   split: ' ',
-  escape: '\\'
+  escape: '\\',
 }
 
 /**
@@ -25,32 +27,35 @@ export const defaultSplitOptions: ISplitOptions = {
  * ['a', 'b c', 'd e']
  * ```
  */
-export function split (ss: string, options: ISplitOptions = defaultSplitOptions) {
+export function split(
+  ss: string,
+  options: ISplitOptions = defaultSplitOptions
+) {
   const bracketStack = {
     data: [] as string[],
-    push (c: string) {
+    push(c: string) {
       this.data.push(c)
     },
-    pop () {
+    pop() {
       return this.data.pop()
     },
-    peek () {
+    peek() {
       return this.data.length > 0 ? this.data[this.data.length - 1] : undefined
-    }
+    },
   }
   const tokenStack = {
     data: [] as string[],
     currentChars: [] as string[],
-    addChar (c: string) {
+    addChar(c: string) {
       this.currentChars.push(c)
     },
-    flush () {
+    flush() {
       const d = this.currentChars.join('')
       if (d) {
         this.data.push(d)
       }
       this.currentChars = []
-    }
+    },
   }
 
   let prev = ''
@@ -79,9 +84,7 @@ export function split (ss: string, options: ISplitOptions = defaultSplitOptions)
       if (c === options.split && !bracketStack.peek()) {
         tokenStack.flush()
       } else {
-        if (options.keepBrace || canAddChar) {
-          tokenStack.addChar(c)
-        }
+        tokenStack.addChar(c)
       }
     }
 
@@ -90,5 +93,16 @@ export function split (ss: string, options: ISplitOptions = defaultSplitOptions)
 
   tokenStack.flush()
 
-  return tokenStack.data.map(s => s.trim()).filter(s => s)
+  return tokenStack.data
+    .map((s) => s.trim())
+    .filter((s) => s)
+    .map((s) => {
+      for (const [op, cl] of options.brackets) {
+        if (s[0] === op && s[s.length - 1] === cl) {
+          return s.substr(1, s.length - 2)
+        }
+      }
+
+      return s
+    })
 }
