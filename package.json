@@ -35,7 +35,7 @@
     "eslint-plugin-standard": ">=4.0.0",
     "eslint-plugin-vue": "^6.1.2",
     "glob": "^7.1.6",
-    "mocha": "^6.2.2",
+    "mocha": "^10.2.0",
     "serialize-javascript": "^2.1.2",
     "ts-mocha": "^6.0.0",
     "typescript": "^3.7.5"
